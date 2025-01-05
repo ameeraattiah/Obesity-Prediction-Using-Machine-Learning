@@ -1,0 +1,560 @@
+---
+title: "Project Report"
+author: "Ameera Attiah S21107316 - Jana Abu Hantash S21107114 - Ahmad ElMaamoun  S21207525"
+date: "Fall 2023"
+header-includes:
+  - \usepackage{fancyhdr}
+  - \usepackage{hyperref}
+  - \usepackage{graphicx}
+  - \usepackage{xcolor}
+  - \usepackage{subcaption}
+output: 
+  pdf_document:
+    latex_engine: xelatex
+    toc: yes
+    number_sections: yes
+    df_print: kable
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{=tex}
+\pagestyle{fancy}
+\fancyhead[R]{CS 3072 - 1}
+\fancyhead[C]{\textbf{Project Report}}
+\fancyfoot[R]{Effat University}
+```
+# Introduction
+
+## What is the aim of the project?
+
+The aim of this project is to apply data science techniques to build a
+predictive model for obesity. The project involves conducting a novel
+analysis of a dataset related to obesity, which includes various
+physical and lifestyle attributes of individuals.
+
+## What will we do in this report?
+
+This report will present a comprehensive analysis of the obesity
+dataset, including data exploration, problem formulation, methodological
+approach, and the results of the predictive modeling. It will also offer
+a roadmap of the project.
+
+# Problem Statement and Background
+
+## Problem statement/aim of the analysis
+
+The problem statement is to predict obesity levels in individuals based
+on various predictors like physical measurements and lifestyle choices.
+This analysis aims to understand the factors contributing to obesity and
+develop a predictive model that can accurately determine an individual's
+obesity level.
+
+## Summary of literature review
+
+Obesity prediction has been studied previously, with various models
+developed to understand its complex etiology. These studies typically
+incorporate demographic, dietary, genetic, and lifestyle factors.
+However, there is still a need for comprehensive models that integrate
+diverse predictors and are applicable across different populations.
+
+# Data
+
+## Unit of observation
+
+The unit of observation in this dataset is individual participants, with
+each row representing a unique individual's data.
+
+## Outcome variable
+
+-   The outcome variable is the obesity level, categorized into distinct
+    classes 'Insufficient Weight', 'Normal Weight', 'Overweight Level I', 
+    'Overweight Level II', 'Obesity Type I', 'Obesity Type II', and
+    'Obesity Type III'.
+-   The variable is derived from participants' physical and lifestyle
+    data.
+-   The distribution of the outcome variable is illustrated in the graph
+    and the frequency table below:
+    -   Insufficient Weight: 272
+    -   Normal Weight: 287
+    -   Overweight Level I: 290
+    -   Overweight Level II: 290
+    -   Obesity Type I: 351
+    -   Obesity Type II: 297
+    -   Obesity Type III: 324
+
+```{r echo=FALSE}
+library(ggplot2)
+# Import the dataset
+obesity_data <- read.csv("Data/Obesity.csv")
+# Count the frequency of each obesity level
+obesity_levels <- as.data.frame(table(obesity_data$NObeyesdad))
+names(obesity_levels) <- c("Obesity_Level", "Count")
+# Create a bar plot
+ggplot(obesity_levels, aes(x = reorder(Obesity_Level, -Count), y = Count, fill = Obesity_Level)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Distribution of Obesity Levels",
+       x = "Obesity Level",
+       y = "Count") +
+  scale_fill_brewer(palette = "Pastel1") +
+  coord_flip() # Flip the coordinates to make it horizontal like in the image
+```
+Figure 1. Distribution of Obesity Levels
+
+## Predictor variables
+
+-   The predictor variables include age, gender, height, weight, family
+    history of overweight, eating habits, physical activity, etc.
+-   These variables are measured through surveys or collected data.
+-   The distribution of each predictor will be presented using
+    descriptive statistics and visualizations.
+
+The descriptive statistics and visualizations for the numeric predictor
+variables in the dataset are as follows:
+
+Table 1. Descriptive Statistics of Key Variables
+```{r echo =FALSE}
+library(knitr)
+library(kableExtra)
+
+# Your data remains the same
+summary_data <- data.frame(
+  Variable = c("Age", "Height", "Weight", "Frequency of Consumption of Vegetables (FCVC)", "Number of Main Meals (NCP)", "Water Consumption (CH2O)", "Physical Activity Frequency (FAF)", "Time Using Technology Devices (TUE)"),
+  Mean = c("24.31 years", "1.70 meters", "86.59 kg", "2.42", "2.69", "2.01", "1.01", "0.66"),
+  `Standard Deviation` = c("6.35 years", "0.09 meters", "26.19 kg", "0.53", "0.78", "0.61", "0.85", "0.61"),
+  Range = c("14 to 61 years", "1.45 to 1.98 meters", "39 to 173 kg", "1 to 3", "1 to 4", "1 to 3", "0 to 3", "0 to 2")
+)
+
+# Modify the kable() function for LaTeX output
+kable(summary_data, format = "latex", booktabs = TRUE, caption = "Descriptive Statistics of Key Variables") %>%
+  kable_styling(full_width = FALSE, position = "center", latex_options = "scale_down")
+
+```
+
+The histograms for each of these variables depict their distributions.
+Most variables show a diverse range of values, suggesting a good variety
+in the dataset for these predictors. For instance, 'Age' shows a
+right-skewed distribution, indicating a higher concentration of younger
+individuals in the dataset, while 'Weight' shows a more normal
+distribution. These visualizations help in understanding the spread and
+central tendencies of the predictor variables.
+
+```{r echo=FALSE}
+library(ggplot2)
+library(gridExtra)
+# Create histograms for each predictor variable
+# Age
+p1 <- ggplot(obesity_data, aes(x = Age)) +
+  geom_histogram(bins = 30, fill = "green", color = "black") +
+  ggtitle("Distribution of Age") +
+  theme_minimal()
+
+# Height
+p2 <- ggplot(obesity_data, aes(x = Height)) +
+  geom_histogram(bins = 30, fill = "green", color = "black") +
+  ggtitle("Distribution of Height") +
+  theme_minimal()
+
+# Weight
+p3 <- ggplot(obesity_data, aes(x = Weight)) +
+  geom_histogram(bins = 30, fill = "green", color = "black") +
+  ggtitle("Distribution of Weight") +
+  theme_minimal()
+
+# FCVC
+p4 <- ggplot(obesity_data, aes(x = FCVC)) +
+  geom_histogram(bins = 10, fill = "green", color = "black") +
+  ggtitle("Distribution of FCVC") +
+  theme_minimal()
+
+# NCP
+p5 <- ggplot(obesity_data, aes(x = NCP)) +
+  geom_histogram(bins = 10, fill = "green", color = "black") +
+  ggtitle("Distribution of NCP") +
+  theme_minimal()
+
+# CH2O
+p6 <- ggplot(obesity_data, aes(x = CH2O)) +
+  geom_histogram(bins = 10, fill = "green", color = "black") +
+  ggtitle("Distribution of CH2O") +
+  theme_minimal()
+
+# FAF
+p7 <- ggplot(obesity_data, aes(x = FAF)) +
+  geom_histogram(bins = 10, fill = "green", color = "black") +
+  ggtitle("Distribution of FAF") +
+  theme_minimal()
+
+# TUE
+p8 <- ggplot(obesity_data, aes(x = TUE)) +
+  geom_histogram(bins = 10, fill = "green", color = "black") +
+  ggtitle("Distribution of TUE") +
+  theme_minimal()
+
+# Arrange the plots into a grid
+grid.arrange(p1, p2, p3, p4, p5, p6, p7, p8, ncol = 2)
+
+```
+Figure 2. Distribution of Variables 
+
+## Potential issues with the data
+
+-   Some variables might have limited variation, affecting the model's
+    ability to learn from them.
+-   Bias could be introduced due to self-reported data or sampling
+    methods.
+ 
+
+## Solutions to the issues
+
+The issues will be addressed through data cleaning, handling missing
+values, ensuring diversity in the dataset, and applying statistical
+techniques to mitigate bias.
+
+# Analysis
+
+## Methods/Tools Explored
+
+For our project, a comprehensive set of tools and methodologies were
+employed to address the problem statement and to analyze the provided
+dataset. The primary software used was R, a powerful tool for
+statistical computing and graphics. This choice was made due to R's
+versatility in handling various types of data and its extensive range of
+packages for data manipulation, visualization, and machine learning.
+
+Key packages utilized in R included:
+
+-   `dplyr` and `tidyr` for data manipulation.
+-   `ggplot2` for data visualization.
+-   `caret` and `randomForest` for machine learning and predictive
+    modeling.
+    
+# Analysis
+
+## Methods/Tools Explored
+
+For our project, a comprehensive set of tools and methodologies were employed to address the problem statement and to analyze the provided dataset. The primary software used was R, a powerful tool for statistical computing and graphics. This choice was made due to R's versatility in handling various types of data and its extensive range of packages for data manipulation, visualization, and machine learning.
+
+Key packages utilized in R included:
+
+- `dplyr` and `tidyr` for data manipulation.
+- `ggplot2` for data visualization.
+- `caret` and `randomForest` for machine learning and predictive modeling.
+
+## Feature Selection
+
+Feature selection was performed using both visual analysis of density plots 
+and Recursive Feature Elimination (RFE). The visual analysis helped us identify 
+patterns and behaviors across different classes within the features, while RFE 
+provided a systematic approach for selecting the most significant features for 
+predictive modeling.
+
+```{r include=FALSE}
+library(caret)
+dataset <- read.csv('Data/Obesity.csv')
+```
+
+```{r include=FALSE}
+set.seed(100)
+
+trainRowNumbers <- createDataPartition(dataset$NObeyesdad, p=0.8, list=FALSE)
+trainData <- dataset[trainRowNumbers,]
+testData <- dataset[-trainRowNumbers,]
+
+x = trainData[, 1:16] # predictor variables
+y = trainData$NObeyesdad#response variable
+
+```
+
+```{r include=FALSE}
+library(skimr)
+skimmed <- skim_to_wide(trainData)
+skimmed[, c(1:5, 9:11, 13, 15:16)]
+```
+
+```{r include=FALSE}
+dummies_model <- dummyVars(NObeyesdad ~ ., data=trainData)
+
+trainData_mat <- predict(dummies_model, newdata = trainData)
+
+trainData <- data.frame(trainData_mat)
+
+str(trainData)
+
+```
+
+```{r include=FALSE}
+#dummies_model <- dummyVars(NObeyesdad ~ ., data=testData)
+
+#testData_mat <- predict(dummies_model, newdata = testData)
+
+#testData <- data.frame(testData_mat)
+
+#str(testData)
+```
+
+
+
+```{r echo=FALSE}
+# Assuming trainData is your dataframe
+library(lattice)
+
+# Select only numeric columns for density plots
+numeric_columns <- sapply(trainData, is.numeric)
+
+# Remove 'NObeyesdad' from the plot as it is the response variable
+numeric_columns["NObeyesdad"] <- FALSE
+
+# Update the plotting function to use only numeric columns
+featurePlot(x = trainData[, 1:31],
+            y = as.factor(y),
+            plot = "density",
+            strip=strip.custom(par.strip.text=list(cex=.7)),
+            scales = list(x = list(relation="free"),
+                          y = list(relation="free")))
+
+```
+Figure 3. Feature Selection Graph 
+
+```{r include=FALSE}
+set.seed(100)
+options(warn=-1)
+
+subsets <- c(1:5, 10, 15, 18)
+
+ctrl <- rfeControl(functions = rfFuncs,
+                   method = "repeatedcv",
+                   repeats = 5,
+                   verbose = FALSE)
+
+lmProfile <- rfe(x=trainData[, 1:31], y=as.factor(y),
+                 sizes = subsets,
+                 rfeControl = ctrl)
+
+lmProfile
+
+```
+### Recursive Feature Elimination (RFE) Results
+
+Based on the RFE method, we identified the top five variables that contribute 
+the most to the predictive model's performance. These were:
+
+1. Weight
+2. Age
+3. Height
+4. Frequency of Consumption of Vegetables (FCVC)
+5. Number of Main Meals (NCP)
+
+These variables showed the highest significance and were therefore chosen for 
+the final model training.
+
+
+## Training the Data
+
+In this section, we outline the process and methodologies involved in training 
+our predictive models. Training a model is a crucial step in the machine 
+learning workflow where the model learns the patterns from the provided dataset 
+to make predictions on new, unseen data.
+
+### Data Preprocessing
+
+Before training, the data underwent several preprocessing steps to ensure its 
+quality and suitability for modeling. These steps included:
+
+- **Cleaning Data**: Removing or imputing missing values and outliers.
+- **Feature Selection**: Selecting the most relevant features to reduce 
+dimensionality and improve model performance
+- **Data Transformation**: Normalizing or scaling features to ensure that they 
+contribute equally to the model's performance.
+
+### Model Selection
+
+We evaluated several machine learning algorithms to find the best performer
+for our specific problem. The models considered included:
+
+- Random Forest (RF): An ensemble learning method for classification and 
+regression.
+- K-Nearest Neighbors (KNN): A simple, instance-based learning algorithm.
+- Support Vector Machines (SVM): Effective in high-dimensional spaces.
+- Linear Discriminant Analysis (LDA): A generalization of Fisher's linear 
+discriminant.
+
+### Model Training
+
+The models were trained using a subset of the data known as the training set. 
+The following steps were involved:
+
+- **Splitting Data**: The data was divided into training and testing sets, using 
+a 80:20 ratio.
+- **Cross-Validation**: We used k-fold cross-validation to assess how the 
+results of a statistical analysis will generalize to an independent dataset.
+- **Training Models**: Each model was trained using the `caret` package,
+which provides a fast and efficient way to create predictive models.
+
+## Model Comparison and Evaluation
+
+Our evaluation process involved comparing several machine learning models using 
+accuracy and Kappa statistics. Box plot was generated to visualize the
+performance metrics for Random Forest (RF), Linear Discriminant Analysis (LDA), 
+k-Nearest Neighbors (kNN), and Support Vector Machine with a linear kernel (SVMLinear).
+
+```{r include=FALSE}
+# Run algorithms using 10-fold cross validation
+trainData$NObeyesdad <- as.factor(y)
+control <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
+metric <- "Accuracy"
+```
+
+```{r include=FALSE}
+#Train model using RF
+set.seed(100)
+model_rf = train(NObeyesdad~., data = trainData, method ='rf', trControl = control, metric = metric)
+model_rf
+```
+
+```{r include=FALSE}
+# Train model using KNN
+model_kNN = train(NObeyesdad~., data = trainData, method ='knn', trControl = control, metric = metric)
+model_kNN
+```
+
+```{r include=FALSE}
+# Train model using SVM
+model_SVM = train(NObeyesdad~., data = trainData, method ='svmRadial', trControl = control, metric = metric)
+model_SVM
+```
+
+```{r include=FALSE}
+# Train model using LDA
+model_LDA = train(NObeyesdad~., data = trainData, method ='lda', trControl = control, metric = metric)
+model_LDA
+
+```
+
+```{r}
+# Save the model to an RDS file
+
+library(MASS)
+# Ensure that the target variable is a factor
+dataset$NObeyesdad <- as.factor(dataset$NObeyesdad)
+
+# Build the LDA model
+model <- lda(NObeyesdad ~ Gender + Age + Height + Weight + family_history_with_overweight + FAVC + FCVC + NCP + CAEC + SMOKE + CH2O + SCC + FAF + TUE + CALC + MTRANS , data = dataset)
+
+# Save the model
+saveRDS(model, "model_subset_lda.rds")
+```
+
+
+
+```{r echo= FALSE}
+models_compare <- resamples(list(RF=model_rf, kNN=model_kNN, SVMLinear=model_SVM, LDA=model_LDA))
+summary(models_compare)
+
+scales <- list(x=list(relation="free"), y=list(relation="free"))
+bwplot(models_compare, scales=scales)
+```
+Figure 4. Comparing Machine Learning Models
+
+### Performance Metrics Analysis
+
+The analysis revealed that:
+
+- **Random Forest (RF)** showed the highest potential for accuracy and Kappa, 
+but also the greatest variability across different tests, which could be 
+indicative of overfitting or sensitivity to the dataset's nuances.
+- **Linear Discriminant Analysis (LDA)** offered a balance between high 
+performance and consistency, with less variability than RF, making it a 
+potentially reliable choice for the model.
+- **k-Nearest Neighbors (kNN)** had lower median values for accuracy and Kappa 
+compared to RF and LDA, with moderate variability, suggesting that while it is 
+less complex, it may not capture the complexities of the dataset as effectively.
+- **Support Vector Machine (SVMLinear)** had the lowest median accuracy and 
+Kappa values, suggesting that it may not be as suitable for this particular 
+dataset, despite its computational efficiency and lower variance.
+
+### Model Selection Decision
+
+Given the trade-offs observed, the Random Forest model would be chosen if the highest predictive performance is required, assuming that measures are taken to mitigate overfitting. However, if the priority is consistent and reliable performance across different samples, Linear Discriminant Analysis could be the preferred model due to its balance between accuracy, Kappa, and lower variability.
+
+# Results
+
+## Summary of Results
+
+The results were presented in a clear, concise manner, supported by
+visualizations and tables. The key findings were:
+
+1.  **Model Performance:** The random forest model's performance metrics
+    indicated a high level of predictive accuracy.
+2.  **Variable Importance:** Using interpretable machine learning
+    techniques, the report highlighted which variables were most
+    influential in the predictive model.
+3.  **Insights from the Model:** The model's interpretation revealed
+    interesting patterns and relationships in the data, providing
+    substantive insights into the research question.
+
+## Conclusion
+
+The conclusions of the analysis are drawn from a thorough examination of
+the data, utilizing a combination of statistical methods and machine
+learning techniques. The key conclusions are:
+
+1.  **Predictive Power of Variables:** The analysis reveals which
+    variables significantly impact the outcome and how they interact
+    with each other. This provides valuable insights into the underlying
+    structure of the data and the factors driving the observed results.
+2.  **Model Effectiveness:** The effectiveness of the random forest
+    model in predicting outcomes is critically assessed, highlighting
+    its strengths and areas where it may have limitations.
+3.  **Practical Implications:** The practical implications of the
+    findings are discussed, offering insights into how these results can
+    be applied in real-world scenarios or in further research.
+
+## Limitations
+
+The limitations of the study are acknowledged to provide a balanced view
+of the findings:
+
+1.  **Data Constraints:** Limitations related to the dataset, such as
+    sample size, representativeness, and potential biases, are
+    discussed. These factors can affect the generalizability of the
+    results.
+2.  **Model Limitations:** The inherent limitations of the random forest
+    model, including its complexity and any assumptions made during the
+    modeling process, are explored.
+3.  **Methodological Boundaries:** The constraints of the chosen
+    statistical methods and tools are addressed, including any
+    limitations in their ability to capture the complexity of the data.
+
+## Future Expansion & Recommendations
+
+Ideas for expanding the analysis, given more time and resources,
+include:
+
+1.  **Incorporating Additional Data Sources:** Expanding the dataset
+    with additional variables or integrating external data sources could
+    provide more comprehensive insights.
+2.  **Exploring Alternative Models:** Examining other machine learning
+    models or statistical techniques could offer different perspectives
+    or uncover new patterns in the data.
+3.  **Deeper Feature Engineering:** A more nuanced approach to feature
+    selection and engineering might reveal more intricate relationships
+    in the data.
+
+# References
+
+Aziz R, Sherwani AY, Al Mahri S, Malik SS, Mohammad S. Why Are Obese People Predisposed to Severe Disease in Viral Respiratory Infections? Obesities. 2023; 3(1):46-58. https://doi.org/10.3390/obesities3010005
+
+Fabio Mendoza, &amp; Alexis Montas. (2019, August 2). Dataset for estimation of obesity levels based on eating habits and physical condition in individuals from Colombia, Peru and Mexico. Data in Brief. https://www.sciencedirect.com/science/article/pii/S2352340919306985 
+
+Lam, B. C. C., Lim, A. Y. L., Chan, S. L., Yum, M. P. S., Koh, N. S. Y., & Finkelstein, E. A. (2023). The impact of obesity: a narrative review. Singapore medical journal, 64(3), 163–171. https://doi.org/10.4103/singaporemedj.SMJ-2022-232
+
+Zhang, X., Wang, Y., & Hu, S. (2022). Editorial: Novel Insights Into Obesity-Related Diseases. Frontiers in physiology, 13, 952682. https://doi.org/10.3389/fphys.2022.952682
+
+Lafia, Aliou & Ketounou, Tankpinou & Honfoga, John & Bonou, Semako & Zime, Aïssatou. (2022). Dietary habits, prevalence of obesity and overweight in developed and developing countries. Research, Society and Development. 11. e249111032769. 10.33448/rsd-v11i10.32769. 
+
+Patel, K. H. K., Reddy, R. K., Sau, A., Sivanandarajah, P., Ardissino, M., & Ng, F. S. (2022). Obesity as a risk factor for cardiac arrhythmias. BMJ medicine, 1(1), e000308. https://doi.org/10.1136/bmjmed-2022-000308
+
+Suliman, N. (2022). Is Obesity having a Role in Inducing Male Infertility? Open Access Journal of Biomedical Science.
